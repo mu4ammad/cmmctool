@@ -1,1 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMMC Controls Management Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .priority-critical { background-color: #ff4757; }
+        .priority-high { background-color: #ff6b47; }
+        .priority-medium { background-color: #ffa502; }
+        .priority-low { background-color: #26de81; }
+
+        .difficulty-very-hard { border-left: 5px solid #8b5cf6; }
+        .difficulty-hard { border-left: 5px solid #ec4899; }
+        .difficulty-medium { border-left: 5px solid #f59e0b; }
+        .difficulty-easy { border-left: 5px solid #10b981; }
+
+        .controls-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+        }
+
+        .control-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .control-id {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #2d3748;
+        }
+
+        .control-badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: white;
+        }
+
+        .control-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+
+        .control-description {
+            line-height: 1.6;
+            color: #4a5568;
+            margin-bottom: 16px;
+            user-select: text;
+            cursor: text;
+        }
+
+        .control-description.highlighted {
+            background-color: #fff3cd;
+            padding: 8px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .control-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Ubuntu', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-highlight {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-highlight:hover {
+            background: #ffca2c;
+            transform: translateY(-2px);
+        }
+
+        .btn-note {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-note:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .sticky-notes {
+            margin-bottom: 16px;
+        }
+
+        .sticky-note {
+            background: #ffeb3b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: rotate(-1deg);
+        }
+
+        .sticky-note:nth-child(even) {
+            transform: rotate(1deg);
+        }
+
+        .sticky-note-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .notes-section {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 16px;
+        }
+
+        .notes-toggle {
+            background: #4c51bf;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Ubuntu', sans-serif;
+            font-weight: 500;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .notes-toggle:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .notes-content {
+            display: none;
+        }
+
+        .notes-content.expanded {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notes-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Ubuntu', sans-serif;
+            font-size: 0.95rem;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .notes-textarea:focus {
+            outline: none;
+            border-color: #4c51bf;
+            box-shadow: 0 0 0 3px rgba(76, 81, 191, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Ubuntu', sans-serif;
+            margin-bottom: 16px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            font-family: 'Ubuntu', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .legend {
+                justify-content: center;
+            }
+            
+            .control-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ CMMC Controls Management Tool</h1>
+            <p>Prioritize, understand, and track your CMMC compliance journey</p>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color priority-critical"></div>
+                    <span>Critical Priority</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color priority-high"></div>
+                    <span>High Priority</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color priority-medium"></div>
+                    <span>Medium Priority</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color priority-low"></div>
+                    <span>Low Priority</span>
+                </div>
+            </div>
+            
+            <div class="legend" style="margin-top: 10px;">
+                <div class="legend-item">
+                    <div style="width: 16px; height: 16px; background: linear-gradient(to right, #8b5cf6 0%, #8b5cf6 100%);"></div>
+                    <span>Very Hard to Implement</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 16px; height: 16px; background: linear-gradient(to right, #ec4899 0%, #ec4899 100%);"></div>
+                    <span>Hard to Implement</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 16px; height: 16px; background: linear-gradient(to right, #f59e0b 0%, #f59e0b 100%);"></div>
+                    <span>Medium Difficulty</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 16px; height: 16px; background: linear-gradient(to right, #10b981 0%, #10b981 100%);"></div>
+                    <span>Easy to Implement</span>
+                </div>
+            </div>
+        </div>
+
+        <input type="text" class="search-bar" placeholder="🔍 Search controls..." id="searchBar">
+
+        <div class="controls-grid" id="controlsGrid">
+            <!-- Controls will be dynamically generated here -->
+        </div>
+    </div>
+
+    <!-- Modal for adding sticky notes -->
+    <div class="modal" id="noteModal">
+        <div class="modal-content">
+            <h3>Add Sticky Note</h3>
+            <input type="text" class="modal-input" id="noteInput" placeholder="Enter your note...">
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn" onclick="closeNoteModal()" style="background: #6c757d; color: white;">Cancel</button>
+                <button class="btn" onclick="addStickyNote()" style="background: #28a745; color: white;">Add Note</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CMMC Controls Data
+        const cmmcControls = [
+            {
+                id: "AC.1.001",
+                title: "Account Management",
+                description: "Limit information system access to authorized users, processes acting on behalf of authorized users, or devices (including other information systems).",
+                priority: "critical",
+                difficulty: "medium",
+                level: 1
+            },
+            {
+                id: "AC.1.002",
+                title: "Access Enforcement",
+                description: "Limit information system access to the types of transactions and functions that authorized users are permitted to execute.",
+                priority: "critical",
+                difficulty: "hard",
+                level: 1
+            },
+            {
+                id: "AC.2.008",
+                title: "Wireless Access Management",
+                description: "Control wireless access to the system including identification and authentication of wireless devices and users.",
+                priority: "high",
+                difficulty: "very-hard",
+                level: 2
+            },
+            {
+                id: "IA.2.078",
+                title: "Identifier Management",
+                description: "Uniquely identify and authenticate organizational users (or processes acting on behalf of organizational users).",
+                priority: "critical",
+                difficulty: "medium",
+                level: 2
+            },
+            {
+                id: "SC.1.175",
+                title: "Collaborative Computing Devices",
+                description: "Monitor, control, and protect organizational communications (i.e., information transmitted or received by organizational information systems) at the external boundaries and key internal boundaries of the information systems.",
+                priority: "medium",
+                difficulty: "hard",
+                level: 1
+            },
+            {
+                id: "AU.2.042",
+                title: "Audit Events",
+                description: "Ensure that the actions of individual system users can be uniquely traced to those users so they can be held accountable for their actions.",
+                priority: "high",
+                difficulty: "medium",
+                level: 2
+            },
+            {
+                id: "CM.2.061",
+                title: "Baseline Configuration",
+                description: "Establish and maintain baseline configurations and inventories of organizational information systems (including hardware, software, firmware, and documentation) throughout the respective system development life cycles.",
+                priority: "high",
+                difficulty: "very-hard",
+                level: 2
+            },
+            {
+                id: "MA.1.132",
+                title: "System Maintenance",
+                description: "Perform maintenance on organizational information systems.",
+                priority: "medium",
+                difficulty: "easy",
+                level: 1
+            },
+            {
+                id: "MP.1.133",
+                title: "Media Protection",
+                description: "Protect (i.e., physically control and securely store) information system media containing Federal Contract Information, both paper and digital.",
+                priority: "high",
+                difficulty: "medium",
+                level: 1
+            },
+            {
+                id: "RE.2.138",
+                title: "Recovery Planning",
+                description: "Develop, document, and periodically update system recovery procedures that maintain or restore business operations.",
+                priority: "critical",
+                difficulty: "very-hard",
+                level: 2
+            }
+        ];
+
+        let currentNoteControlId = null;
+        let savedData = JSON.parse(localStorage.getItem('cmmcControlsData')) || {};
+
+        function getPriorityColor(priority) {
+            const colors = {
+                'critical': '#ff4757',
+                'high': '#ff6b47',
+                'medium': '#ffa502',
+                'low': '#26de81'
+            };
+            return colors[priority];
+        }
+
+        function getDifficultyClass(difficulty) {
+            return `difficulty-${difficulty}`;
+        }
+
+        function createControlCard(control) {
+            const controlData = savedData[control.id] || { highlighted: false, notes: '', stickyNotes: [] };
+            
+            return `
+                <div class="control-card ${getDifficultyClass(control.difficulty)}" data-id="${control.id}">
+                    <div class="control-header">
+                        <div class="control-id">${control.id}</div>
+                        <div class="control-badges">
+                            <span class="badge" style="background-color: ${getPriorityColor(control.priority)}">${control.priority.toUpperCase()}</span>
+                            <span class="badge" style="background-color: #6c757d">Level ${control.level}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-title">${control.title}</div>
+                    
+                    <div class="control-description ${controlData.highlighted ? 'highlighted' : ''}" onclick="toggleHighlight('${control.id}')">
+                        ${control.description}
+                    </div>
+                    
+                    <div class="control-actions">
+                        <button class="btn btn-highlight" onclick="toggleHighlight('${control.id}')">
+                            ${controlData.highlighted ? '🌟 Highlighted' : '✨ Highlight'}
+                        </button>
+                        <button class="btn btn-note" onclick="openNoteModal('${control.id}')">📝 Add Note</button>
+                    </div>
+                    
+                    <div class="sticky-notes" id="stickyNotes-${control.id}">
+                        ${controlData.stickyNotes.map((note, index) => `
+                            <div class="sticky-note">
+                                ${note}
+                                <button class="sticky-note-delete" onclick="deleteStickyNote('${control.id}', ${index})">×</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="notes-section">
+                        <button class="notes-toggle" onclick="toggleNotes('${control.id}')">
+                            📋 Personal Notes ${controlData.notes ? '(Has Notes)' : ''}
+                        </button>
+                        <div class="notes-content" id="notesContent-${control.id}">
+                            <textarea class="notes-textarea" placeholder="Write your understanding, questions, or implementation notes here..." 
+                                     onchange="saveNotes('${control.id}', this.value)">${controlData.notes}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderControls(controlsToRender = cmmcControls) {
+            const grid = document.getElementById('controlsGrid');
+            grid.innerHTML = controlsToRender.map(control => createControlCard(control)).join('');
+        }
+
+        function toggleHighlight(controlId) {
+            if (!savedData[controlId]) {
+                savedData[controlId] = { highlighted: false, notes: '', stickyNotes: [] };
+            }
+            savedData[controlId].highlighted = !savedData[controlId].highlighted;
+            localStorage.setItem('cmmcControlsData', JSON.stringify(savedData));
+            renderControls();
+        }
+
+        function toggleNotes(controlId) {
+            const notesContent = document.getElementById(`notesContent-${controlId}`);
+            notesContent.classList.toggle('expanded');
+        }
+
+        function saveNotes(controlId, notes) {
+            if (!savedData[controlId]) {
+                savedData[controlId] = { highlighted: false, notes: '', stickyNotes: [] };
+            }
+            savedData[controlId].notes = notes;
+            localStorage.setItem('cmmcControlsData', JSON.stringify(savedData));
+        }
+
+        function openNoteModal(controlId) {
+            currentNoteControlId = controlId;
+            document.getElementById('noteModal').style.display = 'block';
+            document.getElementById('noteInput').focus();
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').style.display = 'none';
+            currentNoteControlId = null;
+            document.getElementById('noteInput').value = '';
+        }
+
+        function addStickyNote() {
+            const noteText = document.getElementById('noteInput').value.trim();
+            if (noteText && currentNoteControlId) {
+                if (!savedData[currentNoteControlId]) {
+                    savedData[currentNoteControlId] = { highlighted: false, notes: '', stickyNotes: [] };
+                }
+                savedData[currentNoteControlId].stickyNotes.push(noteText);
+                localStorage.setItem('cmmcControlsData', JSON.stringify(savedData));
+                renderControls();
+                closeNoteModal();
+            }
+        }
+
+        function deleteStickyNote(controlId, index) {
+            if (savedData[controlId] && savedData[controlId].stickyNotes) {
+                savedData[controlId].stickyNotes.splice(index, 1);
+                localStorage.setItem('cmmcControlsData', JSON.stringify(savedData));
+                renderControls();
+            }
+        }
+
+        // Search functionality
+        document.getElementById('searchBar').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredControls = cmmcControls.filter(control => 
+                control.id.toLowerCase().includes(searchTerm) ||
+                control.title.toLowerCase().includes(searchTerm) ||
+                control.description.toLowerCase().includes(searchTerm)
+            );
+            renderControls(filteredControls);
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('noteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeNoteModal();
+            }
+        });
+
+        // Handle Enter key in note input
+        document.getElementById('noteInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addStickyNote();
+            }
+        });
+
+        // Initialize the app
+        renderControls();
+    </script>
+</body>
+</html>
